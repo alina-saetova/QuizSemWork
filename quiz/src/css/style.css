@@ -1,0 +1,13 @@
+.btn_defAnswer {
+    -fx-background-color: #88624a;
+}
+.btn_chosenAnswer {
+    -fx-background-color: #dab914;
+}
+
+.btn_wrongAnswer {
+    -fx-background-color: #da1926;
+}
+.btn_rightAnswer {
+    -fx-background-color: #009900;
+}

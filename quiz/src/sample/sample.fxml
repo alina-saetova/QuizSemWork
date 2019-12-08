@@ -1,8 +1,68 @@
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.layout.GridPane?>
+<?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<GridPane fx:controller="sample.Controller"
-          xmlns:fx="http://javafx.com/fxml" alignment="center" hgap="10" vgap="10">
-</GridPane>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="475.0" prefWidth="698.0" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controller">
+   <center>
+       <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="25" BorderPane.alignment="CENTER">
+           <Text fx:id="text_question" strokeType="OUTSIDE" strokeWidth="0.0" text="вопрос">
+              <font>
+                  <Font size="22.0"/>
+              </font>
+           </Text>
+           <ProgressBar prefWidth="200.0" progress="0.0"/>
+           <Button fx:id="btn_answer1" minWidth="200" mnemonicParsing="false" onAction="#chooseAnswer"
+                   styleClass="btn_defAnswer" text="ответ1">
+              <font>
+                  <Font size="14.0"/>
+              </font>
+           </Button>
+           <Button fx:id="btn_answer2" minWidth="200" mnemonicParsing="false" onAction="#chooseAnswer"
+                   styleClass="btn_defAnswer" text="ответ2">
+               <font>
+                   <Font size="14.0"/>
+               </font>
+           </Button>
+           <Button fx:id="btn_answer3" minWidth="200" mnemonicParsing="false" onAction="#chooseAnswer"
+                   styleClass="btn_defAnswer" text="ответ3">
+               <font>
+                   <Font size="14.0"/>
+               </font>
+           </Button>
+           <Button fx:id="btn_answer4" minWidth="200" mnemonicParsing="false" onAction="#chooseAnswer"
+                   styleClass="btn_defAnswer" text="ответ4">
+               <font>
+                   <Font size="14.0"/>
+               </font>
+           </Button>
+           <Button fx:id="btn_choose" mnemonicParsing="false" onAction="#confirm" text="выбрать"/>
+       </VBox>
+   </center>
+   <right>
+       <Text strokeType="OUTSIDE" strokeWidth="0.0" text="игрок2" BorderPane.alignment="TOP_CENTER" />
+   </right>
+   <left>
+       <VBox BorderPane.alignment="TOP_CENTER" alignment="TOP_CENTER" spacing="30">
+           <Text strokeType="OUTSIDE" strokeWidth="0.0" text="игрок1" BorderPane.alignment="TOP_CENTER" />
+           <Text fx:id="score" strokeType="OUTSIDE" strokeWidth="0.0" text="0/10" BorderPane.alignment="TOP_CENTER" />
+       </VBox>
+   </left>
+   <top>
+      <Text strokeType="OUTSIDE" strokeWidth="0.0" text="игра!" BorderPane.alignment="CENTER">
+         <BorderPane.margin>
+            <Insets bottom="20.0" />
+         </BorderPane.margin>
+      </Text>
+   </top>
+   <bottom>
+       <VBox BorderPane.alignment="CENTER" alignment="CENTER" spacing="10">
+           <Text fx:id="questionCount" strokeType="OUTSIDE" strokeWidth="0.0" text="счетчик вопросов"
+                 BorderPane.alignment="CENTER"/>
+           <Text fx:id="warning" strokeType="OUTSIDE" strokeWidth="0.0" wrappingWidth="93.85546875"
+                 BorderPane.alignment="CENTER" textAlignment="CENTER"/>
+       </VBox>
+   </bottom>
+</BorderPane>

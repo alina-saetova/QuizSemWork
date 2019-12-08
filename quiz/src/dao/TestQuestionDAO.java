@@ -30,24 +30,26 @@ public class TestQuestionDAO {
         while (rs.next()) {
             q = new TestQuestion(
                     rs.getInt("id"),
-                    rs.getString("question"),
-                    rs.getInt("right_answer_id")
+                    rs.getString("question")
             );
         }
         return q;
     }
 
-    public List<TestQuestion> getAllTestQuestions() throws SQLException {
+    public List<TestQuestion> getTestQuestions() throws SQLException {
         PreparedStatement ps = connection.prepareStatement("select * from testquestions");
         ResultSet rs = ps.executeQuery();
         List<TestQuestion> questions = new ArrayList<>();
         while (rs.next()) {
             questions.add(new TestQuestion(
                     rs.getInt("id"),
-                    rs.getString("question"),
-                    rs.getInt("answer")
+                    rs.getString("question")
             ));
         }
-        return questions;
+        List<TestQuestion> randomQuestions = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            randomQuestions.add(questions.get((int) (Math.random() * questions.size())));
+        }
+        return randomQuestions;
     }
 }
