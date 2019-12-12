@@ -1,5 +1,7 @@
-package sample;
+package client;
 
+import connection.ClientConnection;
+import connection.ClientConnectionListener;
 import dao.TestAnswerDAO;
 import dao.TestQuestionDAO;
 import javafx.animation.*;
@@ -8,18 +10,21 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 import models.TestAnswer;
 import models.TestQuestion;
 
-import java.io.File;
+import java.io.IOException;
+import java.net.Socket;
 import java.net.URL;
 import java.sql.SQLException;
 import java.util.*;
 
-public class Controller implements Initializable {
+public class Controller implements Initializable, ClientConnectionListener {
     @FXML
     public Text text_question;
     @FXML
@@ -38,34 +43,76 @@ public class Controller implements Initializable {
     public Text warning;
     @FXML
     public Text score;
+    @FXML
+    public ProgressBar timeProgress;
+    @FXML
+    public Label labelProgress;
+    @FXML
+    public Text playerList;
 
-    private TestQuestionDAO questionDAO = new TestQuestionDAO();
-    private TestAnswerDAO answerDAO = new TestAnswerDAO();
-    private List<TestQuestion> questionList = new ArrayList<>();
-    private List<TestAnswer> answers = new ArrayList<>();
+    ClientConnection connection;
+
+//    private TestQuestionDAO questionDAO = new TestQuestionDAO();
+//    private TestAnswerDAO answerDAO = new TestAnswerDAO();
+//    private List<TestQuestion> questionList = new ArrayList<>();
+//    private List<TestAnswer> answers = new ArrayList<>();
     private List<Button> buttons = new ArrayList<>();
-    private TestAnswer rightAnswer;
-    private int indexQuestion = 0;
-    private int indexOfRightAnswer = 0;
+//    private TestAnswer rightAnswer;
+//    private int indexQuestion = 0;
+//    private int indexOfRightAnswer = 0;
     private int scoreInt = 0;
     private Timeline flash;
     private StringProperty colorStringProperty;
     final ObjectProperty<Color> color
             = new SimpleObjectProperty<>(Color.GRAY);
+    private static final Integer STARTTIME = 15;
+    private IntegerProperty timeSeconds =
+            new SimpleIntegerProperty(STARTTIME);
+    private Timeline timeline;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        try {
+            connection = new ClientConnection(this, new Socket("localhost", 1234));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         buttons.add(btn_answer1);
         buttons.add(btn_answer2);
         buttons.add(btn_answer3);
         buttons.add(btn_answer4);
-        try {
-            questionList = questionDAO.getTestQuestions();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+
+        labelProgress.textProperty().bind(
+                timeSeconds.divide(100).asString());
+        labelProgress.setTextFill(Color.RED);
+        labelProgress.setStyle("-fx-font-size: 4em;");
+        timeProgress.progressProperty()
+                .bind(timeSeconds.divide(STARTTIME* 100.0)
+                        .subtract(1).multiply(-1));
         goToNextQuestion();
         colorStringProperty = createWarningColorStringProperty(color);
+    }
+
+    @Override
+    public void onConnectionReady(ClientConnection connection) {
+
+    }
+
+    @Override
+    public void onReceive(ClientConnection connection, String answer) {
+        if (answer.split(" ").length == 1) {
+            boolean flag = Boolean.parseBoolean(answer);
+            //обработать корректность ответа
+        }
+        else {
+            //метод на установку вопроса и вариантов в фхмл
+        }
+    }
+
+    @Override
+    public void onDisconnect(ClientConnection connection) {
+
     }
 
     private String chosenAnswer = "";
@@ -80,7 +127,9 @@ public class Controller implements Initializable {
         chosenAnswer = chosenButton.getText();
     }
 
+    private boolean isConfirmed = false;
     public void confirm(ActionEvent actionEvent) {
+        isConfirmed = true;
         boolean flag = false;
         if (chosenAnswer.equals(rightAnswer.getAnswer())) {
             score.setText(++scoreInt + "/10");
@@ -120,7 +169,22 @@ public class Controller implements Initializable {
     }
 
     private void goToNextQuestion() {
-        System.out.println(indexQuestion);
+        isConfirmed = false;
+        if (timeline != null) {
+            timeline.stop();
+        }
+        timeSeconds.set((STARTTIME + 1) * 100);
+        timeline = new Timeline();
+        timeline.getKeyFrames().add(
+                new KeyFrame(Duration.seconds(STARTTIME + 1),
+                        new KeyValue(timeSeconds, 0)));
+        timeline.playFromStart();
+        timeline.setOnFinished(event -> {
+            if (!isConfirmed) {
+                noChosenAnswer();
+            }
+        });
+        /*
         if (indexQuestion >= 10) {
             return;
         }
@@ -129,7 +193,6 @@ public class Controller implements Initializable {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        System.out.println(answers);
         for (int i = 0; i < 4; i++) {
             buttons.get(i).setText(answers.get(i).getAnswer());
             if (answers.get(i).isCorrectness()) {
@@ -137,9 +200,31 @@ public class Controller implements Initializable {
                 indexOfRightAnswer = i;
             }
         }
+        * pereneseno v server
+        *
+        */
         chosenAnswer = "";
         questionCount.setText((indexQuestion + 1) + "/10");
         text_question.setText(questionList.get(indexQuestion).getQuestion());
+    }
+
+    private void noChosenAnswer() {
+        warning.setText("Вы не выбрали вариант ответа");
+        buttons.get(indexOfRightAnswer).getStyleClass().remove("btn_defAnswer");
+        buttons.get(indexOfRightAnswer).styleProperty().bind(
+                new SimpleStringProperty("-fx-base: ")
+                        .concat(colorStringProperty)
+                        .concat(";")
+        );
+        createTimeline(color, true);
+        flash.play();
+        flash.setOnFinished(event -> {
+            buttons.get(indexOfRightAnswer).styleProperty().unbind();
+            buttons.get(indexOfRightAnswer).getStyleClass().add("btn_defAnswer");
+            indexQuestion++;
+            warning.setText("");
+            goToNextQuestion();
+        });
     }
 
     public void createTimeline(ObjectProperty<Color> color, boolean flag) {
