@@ -12,8 +12,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class Server implements ClientConnectionListener {
 
@@ -27,19 +26,25 @@ public class Server implements ClientConnectionListener {
     private TestAnswer rightAnswer;
     private int indexQuestion = 0;
     private int indexOfRightAnswer = 0;
+    private int countConReq = 0;
+
+    private Map<String, Integer> players;
 
     public static void main(String[] args) {
         new Server();
+    }
+
+    private Server() {
+        System.out.println("server is running");
         try {
             questionList = questionDAO.getTestQuestions();
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
-    }
-
-    private Server() {
-        System.out.println("server is running");
+        players = new HashMap<>();
+//        Timer timer = new Timer();
+//        TimerTask tt = new Helper();
+//        timer.schedule(tt, 0, 15000);
         ServerSocket ss = null;
         try {
             ss = new ServerSocket(PORT);
@@ -51,24 +56,57 @@ public class Server implements ClientConnectionListener {
         }
     }
 
-    @Override
-    public void onConnectionReady(ClientConnection connection) {
-        connections.add(connection);
-        //отправить всем клиентам имя того кто присоединился в общий список игроков
-//        sendNamePlayerToAll(connection);
-    }
-
-//    private void sendNamePlayerToAll(String value) {
-//        System.out.println(value);
-//        final int lh = connections.size();
-//        for (int i = 0; i < lh; i++){
-//            connections.get(i).sendString(value);
+//    class Helper extends TimerTask {
+//
+//        @Override
+//        public void run() {
+//            goToNextQuestion();
+//            if (++indexQuestion == 10) {
+//                cancel();
+//            }
 //        }
 //    }
 
+    @Override
+    public void onConnectionReady(ClientConnection connection) {
+        connections.add(connection);
+        System.out.println(connection.getName() + " connected");
+        //отправить всем клиентам имя того кто присоединился в общий список игроков
+        updateListPlayers(connection);
+        if (connections.size() == 1) {
+            goToNextQuestion();
+        }
+        else {
+            countConReq++;
+            connection.sendString(new StringBuffer("new con"));
+        }
+    }
+
+    private void updateListPlayers(ClientConnection connection) {
+        if (players.containsKey(connection.getName())) {
+            players.put(connection.getName(), players.get(connection.getName()) + 1);
+        }
+        else {
+            players.put(connection.getName(), 0);
+        }
+        sendListPlayer();
+    }
+
+    private void sendListPlayer() {
+        StringBuffer sb = new StringBuffer("players ");
+        for (String key : players.keySet()) {
+            sb.append(key).append(" ").append(players.get(key)).append(" ");
+        }
+        System.out.println(sb.toString());
+        for (ClientConnection c : connections) {
+            c.sendString(sb);
+        }
+    }
+
     public void goToNextQuestion() {
-        StringBuffer data = new StringBuffer();
-        data.append(questionList.get(indexQuestion).getQuestion()).append(" ");
+        //перееход к следующему вопросу и отправка данных на клиент
+        StringBuffer data = new StringBuffer("question\t");
+        data.append(questionList.get(indexQuestion).getQuestion()).append("\t");
         if (indexQuestion >= 10) {
             return;
         }
@@ -78,32 +116,52 @@ public class Server implements ClientConnectionListener {
             e.printStackTrace();
         }
         for (int i = 0; i < 4; i++) {
-           data.append(answers.get(i).getAnswer()).append(" ");
+           data.append(answers.get(i).getAnswer()).append("\t");
             if (answers.get(i).isCorrectness()) {
                 rightAnswer = answers.get(i);
                 indexOfRightAnswer = i;
             }
         }
-        data.append(rightAnswer).append(" ").append(indexOfRightAnswer);
+        data.append(rightAnswer.getAnswer())
+                .append("\t").append(indexOfRightAnswer)
+                .append("\t").append(indexOfRightAnswer);
         for (ClientConnection c : connections) {
             c.sendString(data);
         }
+
     }
+
 
     @Override
     public void onReceive(ClientConnection connection, String answer) {
-        //Обрабатываем полученный ответ от игрока
-        //метод 1 = отправляем на клиент инфу - о том правильный ли ответ
-        //метод 2 = отправляем другим клиентам инфу - обновляем счет других игроков
-        //
-
-        if (true) {
-
+        if (answer.startsWith("answer")) {
+            String[] ans = answer.split(" ");
+            if (ans[1].equals(rightAnswer.getAnswer())) {
+                connection.sendString(new StringBuffer("correctness ").append("true"));
+                updateListPlayers(connection);
+            }
+            else {
+                connection.sendString(new StringBuffer("correctness ").append("false"));
+            }
+        }
+        if (answer.equals("request")) {
+            System.out.println("go to next");
+            countConReq++;
+            if (countConReq == connections.size()) {
+                goToNextQuestion();
+                indexQuestion++;
+                countConReq = 0;
+            }
         }
     }
 
     @Override
     public void onDisconnect(ClientConnection connection) {
-
+        connections.remove(connection);
+        players.remove(connection.getName());
+        sendListPlayer();
+        System.out.println(connection.getName() + " disconnected");
     }
 }
+
+

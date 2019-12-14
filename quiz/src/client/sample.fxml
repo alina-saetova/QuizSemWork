@@ -35,11 +35,12 @@
                    <Font size="14.0" />
                </font>
            </Button>
-           <Button fx:id="btn_choose" mnemonicParsing="false" onAction="#confirm" text="выбрать" />
+           <Button fx:id="btn_choose" mnemonicParsing="false"  text="выбрать" />
        </VBox>
    </center>
    <right>
-       <Text fx:id="playerList" strokeType="OUTSIDE" strokeWidth="0.0" text="список игроков" BorderPane.alignment="TOP_CENTER" />
+       <VBox fx:id="vbox_players">
+       </VBox>
    </right>
    <left>
        <VBox alignment="TOP_CENTER" spacing="30" BorderPane.alignment="TOP_CENTER">

@@ -5,6 +5,7 @@ import connection.ClientConnectionListener;
 import dao.TestAnswerDAO;
 import dao.TestQuestionDAO;
 import javafx.animation.*;
+import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -12,16 +13,14 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
-import models.TestAnswer;
-import models.TestQuestion;
 
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URL;
-import java.sql.SQLException;
 import java.util.*;
 
 public class Controller implements Initializable, ClientConnectionListener {
@@ -49,17 +48,15 @@ public class Controller implements Initializable, ClientConnectionListener {
     public Label labelProgress;
     @FXML
     public Text playerList;
+    @FXML
+    public VBox vbox_players;
 
     ClientConnection connection;
 
-//    private TestQuestionDAO questionDAO = new TestQuestionDAO();
-//    private TestAnswerDAO answerDAO = new TestAnswerDAO();
-//    private List<TestQuestion> questionList = new ArrayList<>();
-//    private List<TestAnswer> answers = new ArrayList<>();
     private List<Button> buttons = new ArrayList<>();
-//    private TestAnswer rightAnswer;
-//    private int indexQuestion = 0;
-//    private int indexOfRightAnswer = 0;
+    private String rightAnswer;
+    private int indexQuestion = 0;
+    private int indexOfRightAnswer = 0;
     private int scoreInt = 0;
     private Timeline flash;
     private StringProperty colorStringProperty;
@@ -88,9 +85,8 @@ public class Controller implements Initializable, ClientConnectionListener {
         labelProgress.setTextFill(Color.RED);
         labelProgress.setStyle("-fx-font-size: 4em;");
         timeProgress.progressProperty()
-                .bind(timeSeconds.divide(STARTTIME* 100.0)
+                .bind(timeSeconds.divide(STARTTIME * 100.0)
                         .subtract(1).multiply(-1));
-        goToNextQuestion();
         colorStringProperty = createWarningColorStringProperty(color);
     }
 
@@ -101,13 +97,55 @@ public class Controller implements Initializable, ClientConnectionListener {
 
     @Override
     public void onReceive(ClientConnection connection, String answer) {
-        if (answer.split(" ").length == 1) {
-            boolean flag = Boolean.parseBoolean(answer);
-            //обработать корректность ответа
+        System.out.println(answer);
+        if (answer.startsWith("correctness")) {
+            boolean flag = Boolean.parseBoolean(answer.split(" ")[1]);
+            showCorrectAnswer(flag);
         }
-        else {
-            //метод на установку вопроса и вариантов в фхмл
+        else if (answer.startsWith("question")){
+            setQuestionAndAnswers(answer);
+            setTimeAnimation(10);
         }
+        else  if (answer.startsWith("players")) {
+            updateUIListPlayers(answer);
+        }
+        else if (answer.equals("new con")) {
+            Platform.runLater(() -> {
+                text_question.setText("Следующий вопрос появится через несколько секунд :)");
+                buttons.get(0).setText("раз");
+                buttons.get(1).setText("раз");
+                buttons.get(2).setText("это");
+                buttons.get(3).setText("хардбасс");
+
+            });
+        }
+    }
+
+    private void updateUIListPlayers(String str) {
+        Platform.runLater(() -> {
+            vbox_players.getChildren().clear();
+            vbox_players.getChildren().add(new Text("список игроков: "));
+        });
+        String[] tmp = str.split(" ");
+        Platform.runLater(() -> {
+            for (int i = 1; i < tmp.length - 1; i += 2) {
+                vbox_players.getChildren().add(new Text(tmp[i] + ": " + tmp[i + 1]));
+            }
+        });
+
+    }
+
+    private void setQuestionAndAnswers(String answer) {
+        String[] data = answer.split("\t");
+        Platform.runLater(() -> {
+            text_question.setText(data[1]);
+            for (int i = 0; i < 4; i++) {
+                buttons.get(i).setText(data[i + 2]);
+            }
+        });
+        rightAnswer = data[6];
+        indexOfRightAnswer = Integer.parseInt(data[7]);
+        indexQuestion = Integer.parseInt(data[8]);
     }
 
     @Override
@@ -127,88 +165,70 @@ public class Controller implements Initializable, ClientConnectionListener {
         chosenAnswer = chosenButton.getText();
     }
 
-    private boolean isConfirmed = false;
-    public void confirm(ActionEvent actionEvent) {
-        isConfirmed = true;
-        boolean flag = false;
-        if (chosenAnswer.equals(rightAnswer.getAnswer())) {
-            score.setText(++scoreInt + "/10");
-            flag = true;
-        }
+    private void confirm() {
         if (chosenAnswer.equals("")) {
             warning.setText("Вы не выбрали вариант ответа");
-            return;
         }
         else {
+            connection.sendString(new StringBuffer("answer ").append(chosenAnswer));
             warning.setText("");
         }
-        chosenButton.getStyleClass().remove("btn_chosenAnswer");
-//        chosenButton.getStyleClass().remove("btn_defAnswer");
-        chosenButton.styleProperty().bind(
-                new SimpleStringProperty("-fx-base: ")
-                        .concat(colorStringProperty)
-                        .concat(";")
-        );
-        createTimeline(color, flag);
-        flash.play();
-        if (!flag) {
-            buttons.get(indexOfRightAnswer).getStyleClass().remove("btn_defAnswer");
-            buttons.get(indexOfRightAnswer).getStyleClass().add("btn_rightAnswer");
-        }
-        boolean finalFlag = flag;
-        flash.setOnFinished(event -> {
-            chosenButton.styleProperty().unbind();
-            chosenButton.getStyleClass().add("btn_defAnswer");
-            if (!finalFlag) {
-                buttons.get(indexOfRightAnswer).getStyleClass().remove("btn_rightAnswer");
-                buttons.get(indexOfRightAnswer).getStyleClass().add("btn_defAnswer");
-            }
-            indexQuestion++;
-            goToNextQuestion();
-        });
     }
 
-    private void goToNextQuestion() {
-        isConfirmed = false;
+    private void showCorrectAnswer(boolean flag) {
+        createTimeline(color, flag);
+        Platform.runLater(() -> {
+            chosenButton.getStyleClass().remove("btn_chosenAnswer");
+            chosenButton.styleProperty().bind(
+                    new SimpleStringProperty("-fx-base: ")
+                            .concat(colorStringProperty)
+                            .concat(";")
+            );
+            flash.play();
+            if (!flag) {
+                buttons.get(indexOfRightAnswer).getStyleClass().remove("btn_defAnswer");
+                buttons.get(indexOfRightAnswer).getStyleClass().add("btn_rightAnswer");
+            }
+            flash.setOnFinished(event -> {
+                chosenButton.styleProperty().unbind();
+                chosenButton.getStyleClass().add("btn_defAnswer");
+                if (!flag) {
+                    buttons.get(indexOfRightAnswer).getStyleClass().remove("btn_rightAnswer");
+                    buttons.get(indexOfRightAnswer).getStyleClass().add("btn_defAnswer");
+                }
+                connection.sendString(new StringBuffer("request"));
+            });
+       });
+
+    }
+
+    private void setTimeAnimation(int time) {
         if (timeline != null) {
             timeline.stop();
         }
-        timeSeconds.set((STARTTIME + 1) * 100);
-        timeline = new Timeline();
-        timeline.getKeyFrames().add(
-                new KeyFrame(Duration.seconds(STARTTIME + 1),
-                        new KeyValue(timeSeconds, 0)));
-        timeline.playFromStart();
-        timeline.setOnFinished(event -> {
-            if (!isConfirmed) {
-                noChosenAnswer();
-            }
+        Platform.runLater(() -> {
+            timeSeconds.set((time + 1) * 100);
+            timeline = new Timeline();
+            timeline.getKeyFrames().add(
+                    new KeyFrame(Duration.seconds(time + 1),
+                            new KeyValue(timeSeconds, 0))
+            );
+            timeline.playFromStart();
+            timeline.setOnFinished(event -> {
+                if (chosenAnswer.equals("")) {
+                    noConfirmedAnswer();
+                }
+                else {
+                    confirm();
+                }
+            });
+            chosenAnswer = "";
+            questionCount.setText((indexQuestion + 1) + "/10");
+
         });
-        /*
-        if (indexQuestion >= 10) {
-            return;
-        }
-        try {
-            answers = answerDAO.getQuestionTestAnswers(questionList.get(indexQuestion).getId());
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        for (int i = 0; i < 4; i++) {
-            buttons.get(i).setText(answers.get(i).getAnswer());
-            if (answers.get(i).isCorrectness()) {
-                rightAnswer = answers.get(i);
-                indexOfRightAnswer = i;
-            }
-        }
-        * pereneseno v server
-        *
-        */
-        chosenAnswer = "";
-        questionCount.setText((indexQuestion + 1) + "/10");
-        text_question.setText(questionList.get(indexQuestion).getQuestion());
     }
 
-    private void noChosenAnswer() {
+    private void noConfirmedAnswer() {
         warning.setText("Вы не выбрали вариант ответа");
         buttons.get(indexOfRightAnswer).getStyleClass().remove("btn_defAnswer");
         buttons.get(indexOfRightAnswer).styleProperty().bind(
@@ -221,13 +241,14 @@ public class Controller implements Initializable, ClientConnectionListener {
         flash.setOnFinished(event -> {
             buttons.get(indexOfRightAnswer).styleProperty().unbind();
             buttons.get(indexOfRightAnswer).getStyleClass().add("btn_defAnswer");
-            indexQuestion++;
             warning.setText("");
-            goToNextQuestion();
+            System.out.println("nochosen");
+            confirm();
+            connection.sendString(new StringBuffer("request"));
         });
     }
 
-    public void createTimeline(ObjectProperty<Color> color, boolean flag) {
+    private void createTimeline(ObjectProperty<Color> color, boolean flag) {
         if (flag) {
             flash = new Timeline(
                     new KeyFrame(Duration.seconds(0),    new KeyValue(color, Color.GRAY, Interpolator.LINEAR)),
@@ -240,8 +261,8 @@ public class Controller implements Initializable, ClientConnectionListener {
             flash = new Timeline(
                     new KeyFrame(Duration.seconds(0),    new KeyValue(color, Color.GRAY, Interpolator.LINEAR)),
                     new KeyFrame(Duration.seconds(0.25), new KeyValue(color, Color.GRAY, Interpolator.LINEAR)),
-                    new KeyFrame(Duration.seconds(0.5), new KeyValue(color, Color.RED,  Interpolator.LINEAR)),
-                    new KeyFrame(Duration.seconds(0.7), new KeyValue(color, Color.RED,  Interpolator.LINEAR))
+                    new KeyFrame(Duration.seconds(0.5),  new KeyValue(color, Color.RED,  Interpolator.LINEAR)),
+                    new KeyFrame(Duration.seconds(0.7),  new KeyValue(color, Color.RED,  Interpolator.LINEAR))
             );
         }
         flash.setCycleCount(6);
