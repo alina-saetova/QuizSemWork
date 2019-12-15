@@ -1,16 +1,11 @@
 package server;
 
-import com.sun.security.ntlm.Client;
-import connection.ClientConnection;
-import connection.ClientConnectionListener;
-import dao.TestAnswerDAO;
-import dao.TestQuestionDAO;
-import models.TestAnswer;
-import models.TestQuestion;
+import connection.*;
+import dao.*;
+import models.*;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -28,7 +23,7 @@ public class Server implements ClientConnectionListener {
     private int indexOfRightAnswer = 0;
     private int countConReq = 0;
 
-    private Map<String, Integer> players;
+    private Map<String, Integer> players = new HashMap<>();
 
     public static void main(String[] args) {
         new Server();
@@ -41,10 +36,6 @@ public class Server implements ClientConnectionListener {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        players = new HashMap<>();
-//        Timer timer = new Timer();
-//        TimerTask tt = new Helper();
-//        timer.schedule(tt, 0, 15000);
         ServerSocket ss = null;
         try {
             ss = new ServerSocket(PORT);
@@ -56,22 +47,10 @@ public class Server implements ClientConnectionListener {
         }
     }
 
-//    class Helper extends TimerTask {
-//
-//        @Override
-//        public void run() {
-//            goToNextQuestion();
-//            if (++indexQuestion == 10) {
-//                cancel();
-//            }
-//        }
-//    }
-
     @Override
     public void onConnectionReady(ClientConnection connection) {
         connections.add(connection);
         System.out.println(connection.getName() + " connected");
-        //отправить всем клиентам имя того кто присоединился в общий список игроков
         updateListPlayers(connection);
         if (connections.size() == 1) {
             goToNextQuestion();
@@ -103,10 +82,14 @@ public class Server implements ClientConnectionListener {
         }
     }
 
-    public void goToNextQuestion() {
+    private void goToNextQuestion() {
         //перееход к следующему вопросу и отправка данных на клиент
         StringBuffer data = new StringBuffer("question\t");
-        data.append(questionList.get(indexQuestion).getQuestion()).append("\t");
+        data
+                .append(indexQuestion)
+                .append("\t")
+                .append(questionList.get(indexQuestion).getQuestion())
+                .append("\t");
         if (indexQuestion >= 10) {
             return;
         }
@@ -122,9 +105,7 @@ public class Server implements ClientConnectionListener {
                 indexOfRightAnswer = i;
             }
         }
-        data.append(rightAnswer.getAnswer())
-                .append("\t").append(indexOfRightAnswer)
-                .append("\t").append(indexOfRightAnswer);
+        data.append(indexOfRightAnswer);
         for (ClientConnection c : connections) {
             c.sendString(data);
         }
@@ -135,23 +116,54 @@ public class Server implements ClientConnectionListener {
     @Override
     public void onReceive(ClientConnection connection, String answer) {
         if (answer.startsWith("answer")) {
-            String[] ans = answer.split(" ");
-            if (ans[1].equals(rightAnswer.getAnswer())) {
-                connection.sendString(new StringBuffer("correctness ").append("true"));
-                updateListPlayers(connection);
-            }
-            else {
-                connection.sendString(new StringBuffer("correctness ").append("false"));
-            }
+            checkAnswer(connection, answer);
         }
         if (answer.equals("request")) {
-            System.out.println("go to next");
+            sendQuestionToClients();
+        }
+    }
+
+    private void sendQuestionToClients() {
+        System.out.println(indexQuestion);
+        if (indexQuestion == 9) {
+            String winner = "";
+            int scoreWin = 0;
+            for (String key : players.keySet()) {
+                if (players.get(key) > scoreWin) {
+                    winner = key;
+                    scoreWin = players.get(key);
+                }
+            }
+            for (ClientConnection c : connections) {
+                if (c.getName().equals(winner)) {
+                    c.sendString(new StringBuffer("status win"));
+                }
+                else {
+                    c.sendString(new StringBuffer("status lose ").append(winner));
+                }
+            }
+        }
+        else {
             countConReq++;
+            System.out.println("count requests " + countConReq);
             if (countConReq == connections.size()) {
-                goToNextQuestion();
                 indexQuestion++;
+                goToNextQuestion();
                 countConReq = 0;
             }
+        }
+    }
+
+    private void checkAnswer(ClientConnection connection, String answer) {
+        String[] ans = answer.split("\t");
+        System.out.println(ans[1] + " " + rightAnswer.getAnswer());
+        if (ans[1].equals(rightAnswer.getAnswer())) {
+
+            connection.sendString(new StringBuffer("correctness ").append("true"));
+            updateListPlayers(connection);
+        }
+        else {
+            connection.sendString(new StringBuffer("correctness ").append("false"));
         }
     }
 

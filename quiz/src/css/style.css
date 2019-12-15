@@ -11,3 +11,11 @@
 .btn_rightAnswer {
     -fx-background-color: #009900;
 }
+
+.body {
+    -fx-font-family: "Comic Sans MS";
+    -fx-background-color: #f7c817;
+}
+#vbox_players {
+    -fx-font-size: 24;
+}

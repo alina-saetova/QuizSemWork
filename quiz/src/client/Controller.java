@@ -1,18 +1,13 @@
 package client;
 
-import connection.ClientConnection;
-import connection.ClientConnectionListener;
-import dao.TestAnswerDAO;
-import dao.TestQuestionDAO;
+import connection.*;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
+import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
@@ -51,20 +46,18 @@ public class Controller implements Initializable, ClientConnectionListener {
     @FXML
     public VBox vbox_players;
 
-    ClientConnection connection;
+    private ClientConnection connection;
 
     private List<Button> buttons = new ArrayList<>();
-    private String rightAnswer;
-    private int indexQuestion = 0;
     private int indexOfRightAnswer = 0;
     private int scoreInt = 0;
     private Timeline flash;
     private StringProperty colorStringProperty;
-    final ObjectProperty<Color> color
+    private final ObjectProperty<Color> color
             = new SimpleObjectProperty<>(Color.GRAY);
-    private static final Integer STARTTIME = 15;
+    private static final Integer START_TIME = 10;
     private IntegerProperty timeSeconds =
-            new SimpleIntegerProperty(STARTTIME);
+            new SimpleIntegerProperty(START_TIME);
     private Timeline timeline;
 
     @Override
@@ -85,7 +78,7 @@ public class Controller implements Initializable, ClientConnectionListener {
         labelProgress.setTextFill(Color.RED);
         labelProgress.setStyle("-fx-font-size: 4em;");
         timeProgress.progressProperty()
-                .bind(timeSeconds.divide(STARTTIME * 100.0)
+                .bind(timeSeconds.divide(START_TIME * 100.0)
                         .subtract(1).multiply(-1));
         colorStringProperty = createWarningColorStringProperty(color);
     }
@@ -116,8 +109,19 @@ public class Controller implements Initializable, ClientConnectionListener {
                 buttons.get(1).setText("раз");
                 buttons.get(2).setText("это");
                 buttons.get(3).setText("хардбасс");
-
             });
+        }
+        else if (answer.startsWith("status")) {
+            if (answer.split(" ")[1].equals("win")) {
+                Platform.runLater(() -> {
+                    text_question.setText("вы выиграли!!!!!!!!!!");
+                });
+            }
+            else {
+                Platform.runLater(() -> {
+                    text_question.setText(answer.split(" ")[2] + " выиграл");
+                });
+            }
         }
     }
 
@@ -138,14 +142,13 @@ public class Controller implements Initializable, ClientConnectionListener {
     private void setQuestionAndAnswers(String answer) {
         String[] data = answer.split("\t");
         Platform.runLater(() -> {
-            text_question.setText(data[1]);
+            questionCount.setText((Integer.parseInt(data[1]) + 1) + "/10");
+            text_question.setText(data[2]);
             for (int i = 0; i < 4; i++) {
-                buttons.get(i).setText(data[i + 2]);
+                buttons.get(i).setText(data[i + 3]);
             }
         });
-        rightAnswer = data[6];
         indexOfRightAnswer = Integer.parseInt(data[7]);
-        indexQuestion = Integer.parseInt(data[8]);
     }
 
     @Override
@@ -170,7 +173,7 @@ public class Controller implements Initializable, ClientConnectionListener {
             warning.setText("Вы не выбрали вариант ответа");
         }
         else {
-            connection.sendString(new StringBuffer("answer ").append(chosenAnswer));
+            connection.sendString(new StringBuffer("answer\t").append(chosenAnswer));
             warning.setText("");
         }
     }
@@ -223,8 +226,6 @@ public class Controller implements Initializable, ClientConnectionListener {
                 }
             });
             chosenAnswer = "";
-            questionCount.setText((indexQuestion + 1) + "/10");
-
         });
     }
 
@@ -241,9 +242,9 @@ public class Controller implements Initializable, ClientConnectionListener {
         flash.setOnFinished(event -> {
             buttons.get(indexOfRightAnswer).styleProperty().unbind();
             buttons.get(indexOfRightAnswer).getStyleClass().add("btn_defAnswer");
-            warning.setText("");
             System.out.println("nochosen");
             confirm();
+            warning.setText("");
             connection.sendString(new StringBuffer("request"));
         });
     }
