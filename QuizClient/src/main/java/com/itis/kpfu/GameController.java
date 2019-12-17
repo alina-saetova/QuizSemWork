@@ -106,12 +106,17 @@ public class GameController implements Initializable, ClientConnectionListener {
         else if (answer.startsWith("status")) {
             if (answer.split(" ")[1].equals("win")) {
                 Platform.runLater(() -> {
-                    text_question.setText("вы выиграли!!!!!!!!!!");
+                    text_question.setText("Ура! Вы выиграли!");
+                });
+            }
+            else if (answer.split(" ")[1].equals("noone")) {
+                Platform.runLater(() -> {
+                    text_question.setText("Победила дружба :)");
                 });
             }
             else {
                 Platform.runLater(() -> {
-                    text_question.setText(answer.split(" ")[2] + " выиграл");
+                    text_question.setText("К вашему сожалению, выиграл " + answer.split(" ")[2]);
                 });
             }
         }
@@ -121,7 +126,7 @@ public class GameController implements Initializable, ClientConnectionListener {
     private void updateUIListPlayers(String str) {
         Platform.runLater(() -> {
             vbox_players.getChildren().clear();
-            vbox_players.getChildren().add(new Text("список игроков: "));
+            vbox_players.getChildren().add(new Text("Cписок игроков: "));
         });
         String[] tmp = str.split(" ");
         Platform.runLater(() -> {
@@ -139,7 +144,7 @@ public class GameController implements Initializable, ClientConnectionListener {
     private void setQuestionAndAnswers(String answer) {
         String[] data = answer.split("\t");
         Platform.runLater(() -> {
-            questionCount.setText((Integer.parseInt(data[1]) + 1) + "/10");
+            questionCount.setText((Integer.parseInt(data[1]) + 1) + "/10 вопрос");
             text_question.setText(data[2]);
             for (int i = 0; i < 4; i++) {
                 buttons.get(i).setText(data[i + 3]);

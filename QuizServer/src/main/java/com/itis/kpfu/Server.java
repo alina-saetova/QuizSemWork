@@ -1,9 +1,9 @@
 package com.itis.kpfu;
 
-
 import com.itis.kpfu.dao.*;
 import com.itis.kpfu.models.*;
 
+import javax.sound.sampled.Clip;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.sql.SQLException;
@@ -132,12 +132,18 @@ public class Server implements ClientConnectionListener {
                     scoreWin = players.get(key);
                 }
             }
-            for (ClientConnection c : connections) {
-                if (c.getName().equals(winner)) {
-                    c.sendString(new StringBuffer("status win"));
+            if (winner.equals("")) {
+                for (ClientConnection c : connections) {
+                    c.sendString(new StringBuffer("status noone"));
                 }
-                else {
-                    c.sendString(new StringBuffer("status lose ").append(winner));
+            }
+            else {
+                for (ClientConnection c : connections) {
+                    if (c.getName().equals(winner)) {
+                        c.sendString(new StringBuffer("status win"));
+                    } else {
+                        c.sendString(new StringBuffer("status lose ").append(winner));
+                    }
                 }
             }
         }
