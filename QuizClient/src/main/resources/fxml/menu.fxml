@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane prefHeight="800.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <Button fx:id="btn_start" layoutX="275.0" layoutY="355.0" mnemonicParsing="false" prefHeight="30.0" prefWidth="247.0" text="Start">
+          <font>
+              <Font name="Comic Sans MS" size="18.0" />
+          </font>
+      </Button>
+      <TextField fx:id="tf_name" layoutX="275.0" layoutY="275.0" promptText="Введите имя">
+          <font>
+              <Font name="Comic Sans MS" size="18.0" />
+          </font>
+      </TextField>
+      <Text layoutX="311.0" layoutY="204.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Quiz">
+         <font>
+            <Font name="Comic Sans MS" size="74.0" />
+         </font>
+      </Text>
+   </children>
+</AnchorPane>

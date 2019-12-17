@@ -1,4 +1,4 @@
-package connection;
+package com.itis.kpfu;
 
 import java.io.*;
 import java.net.Socket;
@@ -10,14 +10,15 @@ public class ClientConnection {
     private ClientConnectionListener eventListener;
     private BufferedReader in;
     private BufferedWriter out;
+    private  String name;
 
-    public String name;
     public String getName() {
         return name;
     }
 
     public ClientConnection(ClientConnectionListener eventListener, Socket socket) throws IOException {
         name = "player" + System.currentTimeMillis();
+        System.out.println(name + " " + ClientConnection.this.name);
         this.socket = socket;
         this.eventListener = eventListener;
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -27,7 +28,7 @@ public class ClientConnection {
             try {
                 while (!thread.isInterrupted()) {
                     String input = in.readLine();
-                    System.out.println(input);
+                    System.out.println(input + " input");
                     eventListener.onReceive(ClientConnection.this, input);
                 }
             } catch (IOException e) {

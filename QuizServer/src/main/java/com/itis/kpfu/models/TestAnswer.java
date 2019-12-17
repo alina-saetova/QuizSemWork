@@ -1,4 +1,4 @@
-package models;
+package com.itis.kpfu.models;
 
 public class TestAnswer {
 

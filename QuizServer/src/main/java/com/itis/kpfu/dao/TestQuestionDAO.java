@@ -1,7 +1,7 @@
-package dao;
+package com.itis.kpfu.dao;
 
-import helpers.ConnectionToDatabase;
-import models.TestQuestion;
+import com.itis.kpfu.helpers.ConnectionToDatabase;
+import com.itis.kpfu.models.TestQuestion;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

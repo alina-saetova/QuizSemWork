@@ -1,4 +1,4 @@
-package helpers;
+package com.itis.kpfu.helpers;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

@@ -1,4 +1,4 @@
-package connection;
+package com.itis.kpfu;
 
 public interface ClientConnectionListener {
 

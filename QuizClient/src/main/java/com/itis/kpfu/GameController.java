@@ -1,6 +1,5 @@
-package client;
+package com.itis.kpfu;
 
-import connection.*;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.property.*;
@@ -18,7 +17,7 @@ import java.net.Socket;
 import java.net.URL;
 import java.util.*;
 
-public class Controller implements Initializable, ClientConnectionListener {
+public class GameController implements Initializable, ClientConnectionListener {
     @FXML
     public Text text_question;
     @FXML
@@ -30,13 +29,9 @@ public class Controller implements Initializable, ClientConnectionListener {
     @FXML
     public Button btn_answer4;
     @FXML
-    public Button btn_choose;
-    @FXML
     public Text questionCount;
     @FXML
     public Text warning;
-    @FXML
-    public Text score;
     @FXML
     public ProgressBar timeProgress;
     @FXML
@@ -46,12 +41,11 @@ public class Controller implements Initializable, ClientConnectionListener {
     @FXML
     public VBox vbox_players;
 
-    private ClientConnection connection;
+    private ClientConnection clientConnection;
 
     private List<Button> buttons = new ArrayList<>();
     private int indexOfRightAnswer = 0;
-    private int scoreInt = 0;
-    private Timeline flash;
+    public Timeline flash;
     private StringProperty colorStringProperty;
     private final ObjectProperty<Color> color
             = new SimpleObjectProperty<>(Color.GRAY);
@@ -63,16 +57,14 @@ public class Controller implements Initializable, ClientConnectionListener {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         try {
-            connection = new ClientConnection(this, new Socket("localhost", 1234));
+            clientConnection = new ClientConnection(this, new Socket("localhost", 1234));
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         buttons.add(btn_answer1);
         buttons.add(btn_answer2);
         buttons.add(btn_answer3);
         buttons.add(btn_answer4);
-
         labelProgress.textProperty().bind(
                 timeSeconds.divide(100).asString());
         labelProgress.setTextFill(Color.RED);
@@ -85,12 +77,12 @@ public class Controller implements Initializable, ClientConnectionListener {
 
     @Override
     public void onConnectionReady(ClientConnection connection) {
+        System.out.println("onready client" + connection.getName());
 
     }
 
     @Override
     public void onReceive(ClientConnection connection, String answer) {
-        System.out.println(answer);
         if (answer.startsWith("correctness")) {
             boolean flag = Boolean.parseBoolean(answer.split(" ")[1]);
             showCorrectAnswer(flag);
@@ -102,7 +94,7 @@ public class Controller implements Initializable, ClientConnectionListener {
         else  if (answer.startsWith("players")) {
             updateUIListPlayers(answer);
         }
-        else if (answer.equals("new con")) {
+        else if (answer.startsWith("new con")) {
             Platform.runLater(() -> {
                 text_question.setText("Следующий вопрос появится через несколько секунд :)");
                 buttons.get(0).setText("раз");
@@ -123,6 +115,7 @@ public class Controller implements Initializable, ClientConnectionListener {
                 });
             }
         }
+
     }
 
     private void updateUIListPlayers(String str) {
@@ -133,7 +126,11 @@ public class Controller implements Initializable, ClientConnectionListener {
         String[] tmp = str.split(" ");
         Platform.runLater(() -> {
             for (int i = 1; i < tmp.length - 1; i += 2) {
-                vbox_players.getChildren().add(new Text(tmp[i] + ": " + tmp[i + 1]));
+                Text text = new Text(tmp[i] + ": " + tmp[i + 1]);
+                if (tmp[i].equals(clientConnection.getName())) {
+                    text.setUnderline(true);
+                }
+                vbox_players.getChildren().add(text);
             }
         });
 
@@ -173,13 +170,13 @@ public class Controller implements Initializable, ClientConnectionListener {
             warning.setText("Вы не выбрали вариант ответа");
         }
         else {
-            connection.sendString(new StringBuffer("answer\t").append(chosenAnswer));
+            clientConnection.sendString(new StringBuffer("answer\t").append(chosenAnswer));
             warning.setText("");
         }
     }
 
     private void showCorrectAnswer(boolean flag) {
-        createTimeline(color, flag);
+        createTimeline(flag);
         Platform.runLater(() -> {
             chosenButton.getStyleClass().remove("btn_chosenAnswer");
             chosenButton.styleProperty().bind(
@@ -199,7 +196,7 @@ public class Controller implements Initializable, ClientConnectionListener {
                     buttons.get(indexOfRightAnswer).getStyleClass().remove("btn_rightAnswer");
                     buttons.get(indexOfRightAnswer).getStyleClass().add("btn_defAnswer");
                 }
-                connection.sendString(new StringBuffer("request"));
+                clientConnection.sendString(new StringBuffer("request"));
             });
        });
 
@@ -237,19 +234,18 @@ public class Controller implements Initializable, ClientConnectionListener {
                         .concat(colorStringProperty)
                         .concat(";")
         );
-        createTimeline(color, true);
+        createTimeline(true);
         flash.play();
         flash.setOnFinished(event -> {
             buttons.get(indexOfRightAnswer).styleProperty().unbind();
             buttons.get(indexOfRightAnswer).getStyleClass().add("btn_defAnswer");
-            System.out.println("nochosen");
             confirm();
             warning.setText("");
-            connection.sendString(new StringBuffer("request"));
+            clientConnection.sendString(new StringBuffer("request"));
         });
     }
 
-    private void createTimeline(ObjectProperty<Color> color, boolean flag) {
+    public void createTimeline(boolean flag) {
         if (flag) {
             flash = new Timeline(
                     new KeyFrame(Duration.seconds(0),    new KeyValue(color, Color.GRAY, Interpolator.LINEAR)),
@@ -257,6 +253,7 @@ public class Controller implements Initializable, ClientConnectionListener {
                     new KeyFrame(Duration.seconds(0.5), new KeyValue(color, Color.GREEN,  Interpolator.LINEAR)),
                     new KeyFrame(Duration.seconds(0.7), new KeyValue(color, Color.GREEN,  Interpolator.LINEAR))
             );
+            flash.setCycleCount(6);
         }
         else {
             flash = new Timeline(
@@ -265,8 +262,8 @@ public class Controller implements Initializable, ClientConnectionListener {
                     new KeyFrame(Duration.seconds(0.5),  new KeyValue(color, Color.RED,  Interpolator.LINEAR)),
                     new KeyFrame(Duration.seconds(0.7),  new KeyValue(color, Color.RED,  Interpolator.LINEAR))
             );
+            flash.setCycleCount(4);
         }
-        flash.setCycleCount(6);
         flash.setAutoReverse(true);
     }
 

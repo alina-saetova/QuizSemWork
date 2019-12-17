@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="475.0" prefWidth="698.0" styleClass="body" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="client.Controller">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="475.0" prefWidth="698.0" styleClass="body" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.itis.kpfu.GameController">
    <center>
        <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="25" BorderPane.alignment="CENTER">
            <Text fx:id="text_question" strokeType="OUTSIDE" strokeWidth="0.0" text="вопрос" wrappingWidth="400" textAlignment="CENTER">
@@ -44,11 +44,7 @@
    <left>
    </left>
    <top>
-      <Text strokeType="OUTSIDE" strokeWidth="0.0" text="игра!" BorderPane.alignment="CENTER">
-         <BorderPane.margin>
-            <Insets bottom="20.0" />
-         </BorderPane.margin>
-      </Text>
+
    </top>
    <bottom>
        <VBox alignment="CENTER" spacing="10" BorderPane.alignment="CENTER">

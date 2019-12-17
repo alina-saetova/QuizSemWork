@@ -1,4 +1,4 @@
-package client;
+package com.itis.kpfu;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -13,11 +13,11 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-        Parent root1 = FXMLLoader.load(getClass().getResource("menu.fxml"));
+        Parent root1 = FXMLLoader.load(getClass().getResource("/fxml/menu.fxml"));
         Button btn = (Button) root1.lookup("#btn_start");
         btn.setOnAction(event -> {
             try {
-                primaryStage.setScene(new Scene(FXMLLoader.load(getClass().getResource("sample.fxml")), 800, 800));
+                primaryStage.setScene(new Scene(FXMLLoader.load(getClass().getResource("/fxml/sample.fxml")), 800, 800));
             } catch (IOException e) {
                 e.printStackTrace();
             }
