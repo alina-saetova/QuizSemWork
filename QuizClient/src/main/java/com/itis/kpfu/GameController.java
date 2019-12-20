@@ -101,10 +101,11 @@ public class GameController implements Initializable, ClientConnectionListener {
             });
         }
         else if (answer.startsWith("status")) {
-            if (answer.split(" ")[1].equals("win")) {
+            System.out.println(answer);
+            if (answer.split("\t")[1].equals("win")) {
                 Platform.runLater(() -> text_question.setText("Ура! Вы выиграли!"));
             }
-            else if (answer.split(" ")[1].equals("noone")) {
+            else if (answer.split("\t")[1].equals("noone")) {
                 Platform.runLater(() -> text_question.setText("Победила дружба :)"));
             }
             else {
@@ -150,8 +151,9 @@ public class GameController implements Initializable, ClientConnectionListener {
     }
 
     private String chosenAnswer = "";
-    private Button chosenButton = new Button();
+    private Button chosenButton;
     public void chooseAnswer(ActionEvent actionEvent) {
+        chosenButton = new Button();
         chosenButton.getStyleClass().remove("btn_chosenAnswer");
         chosenButton.getStyleClass().remove("btn_defAnswer");
         chosenButton.getStyleClass().add("btn_defAnswer");

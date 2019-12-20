@@ -1,11 +1,10 @@
 package com.itis.kpfu;
 
-import com.itis.kpfu.dao.*;
+import com.itis.kpfu.helpers.DataSource;
 import com.itis.kpfu.models.*;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.sql.SQLException;
 import java.util.*;
 
 public class Server implements ClientConnectionListener {
@@ -13,8 +12,9 @@ public class Server implements ClientConnectionListener {
     private final int PORT = 1234;
     public final ArrayList<ClientConnection> connections = new ArrayList<>();
 
-    private static TestQuestionDAO questionDAO = new TestQuestionDAO();
-    private TestAnswerDAO answerDAO = new TestAnswerDAO();
+//    private static TestQuestionDAO questionDAO = new TestQuestionDAO();
+//    private TestAnswerDAO answerDAO = new TestAnswerDAO();
+    private DataSource dataSource;
     private static List<TestQuestion> questionList = new ArrayList<>();
     private List<TestAnswer> answers = new ArrayList<>();
     private TestAnswer rightAnswer;
@@ -30,11 +30,8 @@ public class Server implements ClientConnectionListener {
 
     public Server() {
         System.out.println("server is running");
-        try {
-            questionList = questionDAO.getTestQuestions();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        dataSource = DataSource.getInstance();
+        questionList = dataSource.getTestQuestions();
         ServerSocket ss = null;
         try {
             ss = new ServerSocket(PORT);
@@ -90,11 +87,7 @@ public class Server implements ClientConnectionListener {
         if (indexQuestion >= 10) {
             return;
         }
-        try {
-            answers = answerDAO.getQuestionTestAnswers(questionList.get(indexQuestion).getId());
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        answers = dataSource.getQuestionTestAnswers(questionList.get(indexQuestion).getId());
         for (int i = 0; i < 4; i++) {
             data.append(answers.get(i).getAnswer()).append("\t");
             if (answers.get(i).isCorrectness()) {
@@ -131,15 +124,15 @@ public class Server implements ClientConnectionListener {
             }
             if (winner.equals("")) {
                 for (ClientConnection c : connections) {
-                    c.sendString(new StringBuffer("status noone"));
+                    c.sendString(new StringBuffer("status\tnoone"));
                 }
             }
             else {
                 for (ClientConnection c : connections) {
                     if (c.getName().equals(winner)) {
-                        c.sendString(new StringBuffer("status win"));
+                        c.sendString(new StringBuffer("status\twin"));
                     } else {
-                        c.sendString(new StringBuffer("status lose\t").append(winner));
+                        c.sendString(new StringBuffer("status\tlose\t").append(winner));
                     }
                 }
             }
