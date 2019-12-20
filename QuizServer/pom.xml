@@ -6,6 +6,7 @@
 
     <groupId>com.itis.kpfu</groupId>
     <artifactId>QuizServer</artifactId>
+    <packaging>jar</packaging>
     <version>1.0-SNAPSHOT</version>
     <build>
         <plugins>
@@ -15,6 +16,17 @@
                 <configuration>
                     <source>8</source>
                     <target>8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.itis.kpfu.Server</mainClass>
+                        </manifest>
+                    </archive>
                 </configuration>
             </plugin>
         </plugins>

@@ -37,8 +37,6 @@ public class GameController implements Initializable, ClientConnectionListener {
     @FXML
     public Label labelProgress;
     @FXML
-    public Text playerList;
-    @FXML
     public VBox vbox_players;
 
     private ClientConnection clientConnection;
@@ -78,13 +76,12 @@ public class GameController implements Initializable, ClientConnectionListener {
     @Override
     public void onConnectionReady(ClientConnection connection) {
         System.out.println("onready client" + connection.getName());
-
     }
 
     @Override
     public void onReceive(ClientConnection connection, String answer) {
         if (answer.startsWith("correctness")) {
-            boolean flag = Boolean.parseBoolean(answer.split(" ")[1]);
+            boolean flag = Boolean.parseBoolean(answer.split("\t")[1]);
             showCorrectAnswer(flag);
         }
         else if (answer.startsWith("question")){
@@ -105,19 +102,13 @@ public class GameController implements Initializable, ClientConnectionListener {
         }
         else if (answer.startsWith("status")) {
             if (answer.split(" ")[1].equals("win")) {
-                Platform.runLater(() -> {
-                    text_question.setText("Ура! Вы выиграли!");
-                });
+                Platform.runLater(() -> text_question.setText("Ура! Вы выиграли!"));
             }
             else if (answer.split(" ")[1].equals("noone")) {
-                Platform.runLater(() -> {
-                    text_question.setText("Победила дружба :)");
-                });
+                Platform.runLater(() -> text_question.setText("Победила дружба :)"));
             }
             else {
-                Platform.runLater(() -> {
-                    text_question.setText("К вашему сожалению, выиграл " + answer.split(" ")[2]);
-                });
+                Platform.runLater(() -> text_question.setText("К вашему сожалению, выиграл " + answer.split("\t")[2]));
             }
         }
 
@@ -128,7 +119,7 @@ public class GameController implements Initializable, ClientConnectionListener {
             vbox_players.getChildren().clear();
             vbox_players.getChildren().add(new Text("Cписок игроков: "));
         });
-        String[] tmp = str.split(" ");
+        String[] tmp = str.split("\t");
         Platform.runLater(() -> {
             for (int i = 1; i < tmp.length - 1; i += 2) {
                 Text text = new Text(tmp[i] + ": " + tmp[i + 1]);
@@ -141,7 +132,7 @@ public class GameController implements Initializable, ClientConnectionListener {
 
     }
 
-    private void setQuestionAndAnswers(String answer) {
+    public void setQuestionAndAnswers(String answer) {
         String[] data = answer.split("\t");
         Platform.runLater(() -> {
             questionCount.setText((Integer.parseInt(data[1]) + 1) + "/10 вопрос");
@@ -253,19 +244,19 @@ public class GameController implements Initializable, ClientConnectionListener {
     public void createTimeline(boolean flag) {
         if (flag) {
             flash = new Timeline(
-                    new KeyFrame(Duration.seconds(0),    new KeyValue(color, Color.GRAY, Interpolator.LINEAR)),
-                    new KeyFrame(Duration.seconds(0.25), new KeyValue(color, Color.GRAY, Interpolator.LINEAR)),
-                    new KeyFrame(Duration.seconds(0.5), new KeyValue(color, Color.GREEN,  Interpolator.LINEAR)),
-                    new KeyFrame(Duration.seconds(0.7), new KeyValue(color, Color.GREEN,  Interpolator.LINEAR))
+                        new KeyFrame(Duration.seconds(0),    new KeyValue(color, Color.GRAY, Interpolator.LINEAR)),
+                        new KeyFrame(Duration.seconds(0.25), new KeyValue(color, Color.GRAY, Interpolator.LINEAR)),
+                        new KeyFrame(Duration.seconds(0.5), new KeyValue(color, Color.GREEN,  Interpolator.LINEAR)),
+                        new KeyFrame(Duration.seconds(0.7), new KeyValue(color, Color.GREEN,  Interpolator.LINEAR))
             );
             flash.setCycleCount(6);
         }
         else {
             flash = new Timeline(
-                    new KeyFrame(Duration.seconds(0),    new KeyValue(color, Color.GRAY, Interpolator.LINEAR)),
-                    new KeyFrame(Duration.seconds(0.25), new KeyValue(color, Color.GRAY, Interpolator.LINEAR)),
-                    new KeyFrame(Duration.seconds(0.5),  new KeyValue(color, Color.RED,  Interpolator.LINEAR)),
-                    new KeyFrame(Duration.seconds(0.7),  new KeyValue(color, Color.RED,  Interpolator.LINEAR))
+                        new KeyFrame(Duration.seconds(0),    new KeyValue(color, Color.GRAY, Interpolator.LINEAR)),
+                        new KeyFrame(Duration.seconds(0.25), new KeyValue(color, Color.GRAY, Interpolator.LINEAR)),
+                        new KeyFrame(Duration.seconds(0.5),  new KeyValue(color, Color.RED,  Interpolator.LINEAR)),
+                        new KeyFrame(Duration.seconds(0.7),  new KeyValue(color, Color.RED,  Interpolator.LINEAR))
             );
             flash.setCycleCount(4);
         }

@@ -28,7 +28,6 @@ public class ClientConnection {
             try {
                 while (!thread.isInterrupted()) {
                     String input = in.readLine();
-                    System.out.println(input + " input");
                     eventListener.onReceive(ClientConnection.this, input);
                 }
             } catch (IOException e) {
